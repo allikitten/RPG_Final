@@ -8,6 +8,7 @@ public class PlayerController : MonoBehaviourPun
 {
     [HideInInspector]
     public int id;
+    private int curAttackerId;
 
     [Header("Info")]
     public float moveSpeed;
@@ -15,6 +16,9 @@ public class PlayerController : MonoBehaviourPun
     public int curHp;
     public int maxHp;
     public bool dead;
+
+    [Header("Stats")]
+    public int kills;
 
     [Header("Attack")]
     public int damage;
@@ -33,7 +37,7 @@ public class PlayerController : MonoBehaviourPun
     public static PlayerController me;
 
     [PunRPC]
-    public void Initialize (Player player)
+    public void Initialize(Player player)
     {
         id = player.ActorNumber;
         photonPlayer = player;
@@ -49,7 +53,7 @@ public class PlayerController : MonoBehaviourPun
             rig.isKinematic = false;
     }
 
-    void Update ()
+    void Update()
     {
         if (!photonView.IsMine)
             return;
@@ -67,7 +71,7 @@ public class PlayerController : MonoBehaviourPun
             weaponAnim.transform.parent.localScale = new Vector3(-1, 1, 1);
     }
 
-    void Move ()
+    void Move()
     {
         // get the horizontal and vertical inputs
         float x = Input.GetAxis("Horizontal");
@@ -77,7 +81,7 @@ public class PlayerController : MonoBehaviourPun
         rig.velocity = new Vector2(x, y) * moveSpeed;
     }
 
-    void Attack ()
+    void Attack()
     {
         lastAttackTime = Time.time;
 
@@ -87,7 +91,7 @@ public class PlayerController : MonoBehaviourPun
         RaycastHit2D hit = Physics2D.Raycast(transform.position + dir, dir, attackRange);
 
         // did we hit the enemy?
-        if(hit.collider != null && hit.collider.gameObject.CompareTag("Enemy"))
+        if (hit.collider != null && hit.collider.gameObject.CompareTag("Enemy"))
         {
             // get the enemy and damage them
             Enemy enemy = hit.collider.GetComponent<Enemy>();
@@ -98,7 +102,7 @@ public class PlayerController : MonoBehaviourPun
     }
 
     [PunRPC]
-    public void TakeDamage (int damage)
+    public void TakeDamage(int damage)
     {
         curHp -= damage;
 
@@ -114,7 +118,7 @@ public class PlayerController : MonoBehaviourPun
     }
 
     [PunRPC]
-    void FlashDamage ()
+    void FlashDamage()
     {
         StartCoroutine(DamageFlash());
 
@@ -126,18 +130,44 @@ public class PlayerController : MonoBehaviourPun
         }
     }
 
-    void Die ()
+    void Die()
     {
         dead = true;
         rig.isKinematic = true;
 
-        transform.position = new Vector3(0, 99, 0);
+        curHp = 0;
 
-        Vector3 spawnPos = GameManager.instance.spawnPoints[Random.Range(0, GameManager.instance.spawnPoints.Length)].position;
-        StartCoroutine(Spawn(spawnPos, GameManager.instance.respawnTime));
+        GameManager.instance.alivePlayers--;
+
+        // host will check the win condition
+        if (PhotonNetwork.IsMasterClient)
+            GameManager.instance.CheckWinCondition();
+
+        // is this our local player?
+        if (photonView.IsMine)
+        {
+            if (curAttackerId != 0)
+                GameManager.instance.GetPlayer(curAttackerId).photonView.RPC("AddKill", RpcTarget.All);
+
+            // set the cam to spectator
+            GetComponentInChildren<CameraController>().SetAsSpectator();
+
+            // disable the physics and hide the player
+            transform.position = new Vector3(0, 99, 0);
+            Vector3 spawnPos = GameManager.instance.spawnPoints[Random.Range(0, GameManager.instance.spawnPoints.Length)].position;
+        }
     }
 
-    IEnumerator Spawn (Vector3 spawnPos, float timeToSpawn)
+    [PunRPC]
+    public void AddKill()
+    {
+        kills++;
+
+        // update the UI
+        GameUI.instance.UpdatePlayerInfoText();
+    }
+
+    IEnumerator Spawn(Vector3 spawnPos, float timeToSpawn)
     {
         yield return new WaitForSeconds(timeToSpawn);
 
@@ -151,7 +181,7 @@ public class PlayerController : MonoBehaviourPun
     }
 
     [PunRPC]
-    void Heal (int amountToHeal)
+    void Heal(int amountToHeal)
     {
         curHp = Mathf.Clamp(curHp + amountToHeal, 0, maxHp);
 
@@ -160,7 +190,7 @@ public class PlayerController : MonoBehaviourPun
     }
 
     [PunRPC]
-    void GiveGold (int goldToGive)
+    void GiveGold(int goldToGive)
     {
         gold += goldToGive;
 

@@ -133,7 +133,7 @@ SpriteRenderer:
   m_SortingLayerID: 906284995
   m_SortingLayer: 4
   m_SortingOrder: 0
-  m_Sprite: {fileID: -511687452, guid: 3a6b01f1fdf0b0442bff0693a7966421, type: 3}
+  m_Sprite: {fileID: -1039745064, guid: 3a6b01f1fdf0b0442bff0693a7966421, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -199,6 +199,7 @@ MonoBehaviour:
   curHp: 100
   maxHp: 100
   dead: 0
+  kills: 0
   damage: 10
   attackRange: 1
   attackRate: 0.2

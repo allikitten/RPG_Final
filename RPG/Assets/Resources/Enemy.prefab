@@ -79,7 +79,7 @@ SpriteRenderer:
   m_SortingLayerID: -987508617
   m_SortingLayer: 3
   m_SortingOrder: 0
-  m_Sprite: {fileID: 897902157, guid: 3a6b01f1fdf0b0442bff0693a7966421, type: 3}
+  m_Sprite: {fileID: -286645020, guid: 07bf7fa0896103c45b0d1827cc0f6867, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -147,7 +147,7 @@ MonoBehaviour:
   attackRange: 1.5
   playerDetectRate: 0.2
   objectToSpawnOnDeath: GoldPickup
-  damage: 5
+  damage: 7
   attackRate: 0.5
   healthBar: {fileID: 3963960684105096620}
   sr: {fileID: 6852491317139380244}
